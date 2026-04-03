@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SkillPath — Course Recommendation System</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root {
+  --navy:   #0f1e35;
+  --navy2:  #162840;
+  --blue:   #2563eb;
+  --blue2:  #1d4ed8;
+  --teal:   #0d9488;
+  --green:  #16a34a;
+  --amber:  #d97706;
+  --red:    #dc2626;
+  --slate:  #64748b;
+  --light:  #f1f5f9;
+  --border: #e2e8f0;
+  --white:  #ffffff;
+  --text:   #0f172a;
+  --muted:  #64748b;
+  --font:   'Plus Jakarta Sans', sans-serif;
+}
+
+body { font-family: var(--font); background: var(--light); color: var(--text); min-height: 100vh; }
+
+/* ── Sidebar ── */
+.sidebar {
+  position: fixed; top: 0; left: 0;
+  width: 220px; height: 100vh;
+  background: var(--navy);
+  display: flex; flex-direction: column;
+  z-index: 100;
+}
+.sidebar-logo {
+  padding: 22px 20px 18px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.sidebar-logo .logo-mark {
+  width: 36px; height: 36px;
+  background: var(--blue);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; font-weight: 800; color: white;
+  margin-bottom: 8px;
+}
+.sidebar-logo h2 { font-size: 1rem; font-weight: 800; color: white; }
+.sidebar-logo p  { font-size: 0.68rem; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+.nav-section { padding: 16px 12px 8px; }
+.nav-label   { font-size: 0.6rem; color: rgba(255,255,255,0.3); letter-spacing: 0.1em; text-transform: uppercase; padding: 0 8px; margin-bottom: 6px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.82rem; font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  transition: all 0.15s;
+  margin-bottom: 2px;
+}
+.nav-item:hover  { background: rgba(255,255,255,0.07); color: white; }
+.nav-item.active { background: var(--blue); color: white; }
+.nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.user-chip {
+  display: flex; align-items: center; gap: 10px;
+}
+.avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700; color: white;
+  flex-shrink: 0;
+}
+.user-name { font-size: 0.78rem; font-weight: 600; color: white; }
+
+/* ── Main area ── */
+.main { margin-left: 220px; min-height: 100vh; }
+
+/* ── Top bar ── */
+.topbar {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 14px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-size: 1.05rem; font-weight: 700; }
+.topbar-sub   { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+.topbar-badge {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: var(--blue);
+  font-size: 0.72rem; font-weight: 600;
+  padding: 4px 12px; border-radius: 20px;
+}
+
+/* ── Page sections ── */
+.page { display: none; padding: 24px 28px; }
+.page.active { display: block; }
+
+/* ── Section title ── */
+.section-title {
+  font-size: 0.7rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--muted); margin-bottom: 14px;
+}
+
+/* ── Stats row ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 24px; }
+.stat-card {
+  background: white; border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px 18px;
+}
+.stat-card .label { font-size: 0.72rem; color: var(--muted); font-weight: 500; }
+.stat-card .value { font-size: 1.6rem; font-weight: 800; margin: 4px 0 2px; }
+.stat-card .delta { font-size: 0.72rem; color: var(--green); font-weight: 500; }
+.stat-card.blue   .value { color: var(--blue); }
+.stat-card.teal   .value { color: var(--teal); }
+.stat-card.green  .value { color: var(--green); }
+.stat-card.amber  .value { color: var(--amber); }
+
+/* ── Two-column layout ── */
+.two-col { display: grid; grid-template-columns: 340px 1fr; gap: 20px; align-items: start; }
+
+/* ── Card ── */
+.card {
+  background: white; border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px;
+}
+.card-title {
+  font-size: 0.88rem; font-weight: 700; margin-bottom: 14px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+
+/* ── Skill input ── */
+.skill-search {
+  width: 100%; padding: 9px 12px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: var(--font); font-size: 0.82rem;
+  outline: none; margin-bottom: 12px; color: var(--text);
+}
+.skill-search:focus { border-color: var(--blue); }
+
+.skills-grid { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
+.skill-pill {
+  padding: 5px 13px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px; font-size: 0.78rem; font-weight: 500;
+  cursor: pointer; color: var(--muted); background: white;
+  transition: all 0.15s; user-select: none;
+}
+.skill-pill:hover   { border-color: var(--blue); color: var(--blue); }
+.skill-pill.selected {
+  background: var(--blue); border-color: var(--blue);
+  color: white;
+}
+
+.selected-row {
+  background: #eff6ff; border-radius: 8px;
+  padding: 10px 12px; margin-bottom: 14px;
+  font-size: 0.75rem; color: var(--blue); font-weight: 500;
+  min-height: 36px;
+}
+
+.find-btn {
+  width: 100%; padding: 11px;
+  background: var(--blue); color: white;
+  border: none; border-radius: 9px;
+  font-family: var(--font); font-size: 0.88rem; font-weight: 700;
+  cursor: pointer; transition: background 0.15s;
+}
+.find-btn:hover    { background: var(--blue2); }
+.find-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+/* ── Course cards ── */
+.course-list { display: flex; flex-direction: column; gap: 10px; }
+.course-card {
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  animation: fadeIn 0.3s ease both;
+}
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.course-card:hover { border-color: var(--blue); box-shadow: 0 2px 12px rgba(37,99,235,0.08); }
+.course-card.in-path { border-color: var(--teal); background: #f0fdfa; }
+
+/* ── Checkbox style ── */
+.path-checkbox {
+  width: 18px; height: 18px;
+  accent-color: var(--teal);
+  cursor: pointer; flex-shrink: 0;
+}
+
+.add-path-label {
+  font-size: 0.68rem; color: var(--teal); font-weight: 600;
+  white-space: nowrap;
+}
+.course-card.in-path .add-path-label { color: var(--green); }
+
+.course-rank {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--light); display: flex; align-items: center; justify-content: center;
+  font-size: 0.72rem; font-weight: 700; color: var(--muted); flex-shrink: 0;
+}
+.course-rank.top { background: #fef3c7; color: #92400e; }
+
+.course-info { flex: 1; }
+.course-name { font-size: 0.88rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.course-meta { font-size: 0.72rem; color: var(--muted); }
+.course-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.tag {
+  font-size: 0.62rem; font-weight: 600; padding: 2px 7px;
+  border-radius: 4px; background: #f1f5f9; color: var(--slate);
+}
+
+.match-block { text-align: right; flex-shrink: 0; }
+.match-pct   { font-size: 1.1rem; font-weight: 800; }
+.match-lbl   { font-size: 0.62rem; color: var(--muted); }
+.mini-bar    { width: 52px; height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 4px; margin-left: auto; }
+.mini-fill   { height: 100%; border-radius: 2px; }
+
+.empty-state {
+  text-align: center; padding: 50px 20px;
+  color: var(--muted); font-size: 0.85rem; line-height: 1.7;
+}
+.empty-icon { font-size: 2.5rem; margin-bottom: 10px; opacity: 0.4; }
+
+/* ── Learning path ── */
+.path-steps { display: flex; flex-direction: column; gap: 0; }
+.path-step {
+  display: flex; gap: 14px; padding-bottom: 20px;
+  position: relative;
+}
+.path-step:last-child { padding-bottom: 0; }
+.step-line-wrap { display: flex; flex-direction: column; align-items: center; }
+.step-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem; font-weight: 700;
+  background: white; color: var(--muted); flex-shrink: 0;
+  z-index: 1;
+}
+.step-dot.done   { background: var(--green); border-color: var(--green); color: white; }
+.step-dot.active { background: var(--blue);  border-color: var(--blue);  color: white; }
+.step-dot.locked { background: white; border-color: var(--border); color: var(--muted); }
+.step-connector {
+  flex: 1; width: 2px;
+  background: var(--border); margin: 4px 0;
+  min-height: 20px;
+}
+.step-connector.done { background: var(--green); }
+.step-body { padding-top: 4px; flex: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.step-body-left { flex: 1; }
+.step-title  { font-size: 0.85rem; font-weight: 700; margin-bottom: 3px; }
+.step-detail { font-size: 0.72rem; color: var(--muted); line-height: 1.5; }
+.step-badge  {
+  display: inline-block; margin-top: 6px;
+  font-size: 0.65rem; font-weight: 600; padding: 2px 8px;
+  border-radius: 4px;
+}
+.step-badge.done   { background: #dcfce7; color: #166534; }
+.step-badge.active { background: #dbeafe; color: #1e40af; }
+.step-badge.locked { background: #f1f5f9; color: #64748b; }
+
+/* Toggle done button */
+.toggle-done-btn {
+  font-size: 0.68rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 6px;
+  border: 1.5px solid var(--border);
+  background: white; color: var(--muted);
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+}
+.toggle-done-btn:hover { border-color: var(--green); color: var(--green); }
+.toggle-done-btn.is-done { border-color: var(--green); background: #dcfce7; color: #166534; }
+
+/* ── Progress tracker ── */
+.progress-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.progress-pct { font-size: 1.8rem; font-weight: 800; color: var(--blue); }
+.progress-sub { font-size: 0.72rem; color: var(--muted); }
+
+.big-bar {
+  height: 10px; background: var(--border);
+  border-radius: 5px; overflow: hidden; margin-bottom: 20px;
+}
+.big-fill {
+  height: 100%; border-radius: 5px;
+  background: linear-gradient(90deg, var(--blue), var(--teal));
+  transition: width 0.6s ease;
+}
+
+.track-list { display: flex; flex-direction: column; gap: 10px; }
+.track-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.track-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+.track-icon.done   { background: #dcfce7; }
+.track-icon.active { background: #dbeafe; }
+.track-icon.locked { background: #f1f5f9; opacity: 0.6; }
+
+.track-info { flex: 1; }
+.track-name   { font-size: 0.82rem; font-weight: 600; }
+.track-status { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+.track-bar    { width: 80px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.track-fill   { height: 100%; border-radius: 3px; background: var(--blue); }
+
+/* ── Dashboard activity ── */
+.activity-list { display: flex; flex-direction: column; gap: 8px; }
+.activity-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 8px; background: var(--light);
+}
+.act-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.act-text { font-size: 0.78rem; flex: 1; }
+.act-time { font-size: 0.68rem; color: var(--muted); }
+
+.recommended-strip {
+  display: flex; gap: 12px; overflow-x: auto;
+  padding-bottom: 4px; margin-top: 4px;
+}
+.strip-card {
+  flex-shrink: 0; width: 200px;
+  border: 1px solid var(--border); border-radius: 10px; padding: 14px;
+  transition: border-color 0.15s;
+}
+.strip-card:hover { border-color: var(--blue); }
+.strip-level {
+  font-size: 0.62rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; margin-bottom: 6px;
+}
+.strip-name { font-size: 0.82rem; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+.strip-match {
+  font-size: 0.72rem; font-weight: 700; color: var(--blue);
+}
+
+/* path add hint */
+.path-hint {
+  background: #f0fdfa; border: 1px solid #99f6e4;
+  border-radius: 8px; padding: 10px 14px;
+  font-size: 0.75rem; color: #0f766e;
+  margin-bottom: 14px; display: none;
+}
+.path-hint.visible { display: block; }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">S</div>
+    <h2>SkillPath</h2>
+    <p>Course Recommendation System</p>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Menu</div>
+    <div class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('recommend',this)">
+      <span class="nav-icon">🎯</span> Find Courses
+    </div>
+    <div class="nav-item" onclick="showPage('path',this)">
+      <span class="nav-icon">🗺️</span> Learning Path
+    </div>
+    <div class="nav-item" onclick="showPage('progress',this)">
+      <span class="nav-icon">📈</span> Progress Tracker
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="user-chip">
+      <div class="avatar">ST</div>
+      <div>
+        <div class="user-name">Student</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-sub" id="page-sub">Welcome back — here's your learning overview</div>
+    </div>
+    <div class="topbar-badge">Smart Recommendations ON</div>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div class="page active" id="page-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="label">Courses Recommended</div>
+        <div class="value" id="d-reco">0</div>
+        <div class="delta">Based on your skills</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="label">Skills Added</div>
+        <div class="value" id="d-skills">0</div>
+        <div class="delta">Keep adding more</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Path Progress</div>
+        <div class="value" id="d-prog">0%</div>
+        <div class="delta" id="d-prog-sub">No courses added yet</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="label">Courses in Path</div>
+        <div class="value" id="d-path-count">0</div>
+        <div class="delta">Added to learning path</div>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-bottom:20px;">
+      <div class="card">
+        <div class="card-title">Recent Activity</div>
+        <div class="activity-list" id="activity-list">
+          <div class="activity-item">
+            <div class="act-dot" style="background:#64748b"></div>
+            <div class="act-text">Welcome to SkillPath!</div>
+            <div class="act-time">Today</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Top Picks For You</div>
+        <div class="section-title" style="margin-bottom:10px" id="dash-strip-hint">Go to Find Courses, select your skills to see picks here</div>
+        <div class="recommended-strip" id="dash-strip"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FIND COURSES ── -->
+  <div class="page" id="page-recommend">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Your Skill Profile</div>
+        <input class="skill-search" id="skill-search" placeholder="Search skills..." oninput="filterSkills(this.value)"/>
+        <div class="section-title">Select all skills you know</div>
+        <div class="skills-grid" id="skills-grid"></div>
+        <div class="selected-row" id="selected-row">No skills selected yet</div>
+        <button class="find-btn" id="find-btn" onclick="recommend()" disabled>
+          Get My Recommendations →
+        </button>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+          <div class="card-title" style="margin:0;padding:0;border:none;">Course Suggestions</div>
+          <span id="result-count" style="font-size:0.75rem;color:var(--muted);"></span>
+        </div>
+        <div class="path-hint" id="path-hint">
+          ✅ Tick the checkbox next to any course to add it to your Learning Path
+        </div>
+        <div id="results-area">
+          <div class="empty-state">
+            <div class="empty-icon">🎯</div>
+            Select your skills on the left and click<br>
+            <strong>Get My Recommendations</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LEARNING PATH ── -->
+  <div class="page" id="page-path">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Your Learning Roadmap</div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:18px;line-height:1.6;">
+          Courses you've added from Find Courses. Mark each one complete as you finish it.
+        </p>
+        <div class="path-steps" id="path-steps">
+          <div style="color:var(--muted);font-size:0.82rem;padding:20px 0;">
+            Go to <strong>Find Courses</strong>, get recommendations, then tick the checkbox on any course to add it here.
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Path Overview</div>
+        <div class="progress-header">
+          <div>
+            <div class="progress-pct" id="path-pct">0%</div>
+            <div class="progress-sub">of your learning path complete</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:1.1rem;font-weight:700;" id="path-steps-done">0/0</div>
+            <div style="font-size:0.7rem;color:var(--muted);">steps</div>
+          </div>
+        </div>
+        <div class="big-bar"><div class="big-fill" id="path-bar" style="width:0%"></div></div>
+        <div style="font-size:0.78rem;color:var(--muted);line-height:1.7;">
+          Mark each course as complete using the button next to it on the left. Your progress updates here and in the Progress Tracker.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── PROGRESS TRACKER ── -->
+  <div class="page" id="page-progress">
+    <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="stat-card blue">
+        <div class="label">Overall Progress</div>
+        <div class="value" id="prog-overall">0%</div>
+        <div class="delta">Keep going!</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">Completed</div>
+        <div class="value" id="prog-done-count">0</div>
+        <div class="delta" id="prog-total-label">courses in path</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="label">Remaining</div>
+        <div class="value" id="prog-remaining">0</div>
+        <div class="delta">to finish</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Course Progress</div>
+      <div class="track-list" id="track-list">
+        <div style="color:var(--muted);font-size:0.82rem;padding:20px 0;text-align:center;">
+          Add courses to your learning path first, then mark them complete to track progress here.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
